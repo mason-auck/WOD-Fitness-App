@@ -1,27 +1,23 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable } from "react-native";
 
-import { Colors } from "@/constants/theme";
 import { useDrawerMenu } from "@/components/drawer-menu";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Layout } from "@/constants/theme";
+import { useAppStyles } from "@/hooks/use-app-styles";
 
 export function HamburgerButton() {
   const { open } = useDrawerMenu();
-  const colorScheme = useColorScheme() ?? "light";
+  const { colors, styles } = useAppStyles();
 
   return (
     <Pressable
       onPress={open}
       hitSlop={8}
-      style={{ marginLeft: 4 }}
+      style={styles.hamburgerHitArea}
       accessibilityRole="button"
       accessibilityLabel="Open menu"
     >
-      <MaterialIcons
-        name="menu"
-        size={28}
-        color={Colors[colorScheme].tint}
-      />
+      <MaterialIcons name="menu" size={Layout.iconLg} color={colors.tint} />
     </Pressable>
   );
 }

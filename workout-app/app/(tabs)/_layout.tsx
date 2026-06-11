@@ -5,16 +5,15 @@ import { DrawerMenuProvider } from "@/components/drawer-menu";
 import { HapticTab } from "@/components/haptic-tab";
 import { HamburgerButton } from "@/components/hamburger-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAppStyles } from "@/hooks/use-app-styles";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const { colors } = useAppStyles();
 
   return (
     <DrawerMenuProvider>
       <Tabs
+        initialRouteName="profile"
         screenOptions={{
           tabBarActiveTintColor: colors.tint,
           headerShown: true,
@@ -25,8 +24,9 @@ export default function TabLayout() {
           tabBarStyle: { backgroundColor: colors.background },
         }}
       >
+        <Tabs.Screen name="index" options={{ href: null }} />
         <Tabs.Screen
-          name="index"
+          name="profile"
           options={{
             title: "Profile",
             tabBarIcon: ({ color }) => (
@@ -55,7 +55,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="personal-records"
           options={{
-            href: null, // hides it fromt the tab bar
+            href: null,
             title: "Personal Records",
           }}
         />

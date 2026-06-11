@@ -8,14 +8,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Animated, {
   Easing,
   runOnJS,
@@ -25,11 +18,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-
-const DRAWER_WIDTH = 320;
-const ANIMATION_DURATION = 280;
+import { Animation, Layout } from "@/constants/theme";
+import { useAppStyles } from "@/hooks/use-app-styles";
 
 type DrawerMenuItem = {
   label: string;
@@ -66,24 +56,23 @@ export function useDrawerMenu() {
 export function DrawerMenuProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
   const router = useRouter();
-  const colorScheme = useColorScheme() ?? "light";
-  const colors = Colors[colorScheme];
+  const { colors, styles } = useAppStyles();
   const insets = useSafeAreaInsets();
 
-  const translateX = useSharedValue(-DRAWER_WIDTH);
+  const translateX = useSharedValue(-Layout.drawerWidth);
   const backdropOpacity = useSharedValue(0);
 
   const open = useCallback(() => {
-    translateX.value = -DRAWER_WIDTH;
+    translateX.value = -Layout.drawerWidth;
     backdropOpacity.value = 0;
     setVisible(true);
   }, [translateX, backdropOpacity]);
 
   const close = useCallback(() => {
     translateX.value = withTiming(
-      -DRAWER_WIDTH,
+      -Layout.drawerWidth,
       {
-        duration: ANIMATION_DURATION,
+        duration: Animation.drawerDuration,
         easing: Easing.out(Easing.cubic),
       },
       (finished) => {
@@ -92,17 +81,21 @@ export function DrawerMenuProvider({ children }: { children: ReactNode }) {
         }
       },
     );
-    backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+    backdropOpacity.value = withTiming(0, {
+      duration: Animation.drawerDuration,
+    });
   }, [translateX, backdropOpacity]);
 
   useEffect(() => {
     if (!visible) return;
 
     translateX.value = withTiming(0, {
-      duration: ANIMATION_DURATION,
+      duration: Animation.drawerDuration,
       easing: Easing.out(Easing.cubic),
     });
-    backdropOpacity.value = withTiming(0.5, { duration: ANIMATION_DURATION });
+    backdropOpacity.value = withTiming(Animation.drawerBackdropOpacity, {
+      duration: Animation.drawerDuration,
+    });
   }, [visible, translateX, backdropOpacity]);
 
   const drawerAnimatedStyle = useAnimatedStyle(() => ({
@@ -129,16 +122,12 @@ export function DrawerMenuProvider({ children }: { children: ReactNode }) {
       >
         <View style={styles.modalContainer}>
           <Animated.View
-            style={[styles.backdrop, backdropAnimatedStyle]}
+            style={[styles.drawerBackdrop, backdropAnimatedStyle]}
             pointerEvents="none"
           />
-          <View style={styles.overlay}>
+          <View style={styles.drawerOverlay}>
             <Animated.View
-              style={[
-                styles.drawer,
-                { backgroundColor: colors.background },
-                drawerAnimatedStyle,
-              ]}
+              style={[styles.drawerPanel, drawerAnimatedStyle]}
             >
               <View
                 style={[styles.drawerHeader, { paddingTop: insets.top + 12 }]}
@@ -149,70 +138,23 @@ export function DrawerMenuProvider({ children }: { children: ReactNode }) {
                 {MENU_ITEMS.map((item) => (
                   <Pressable
                     key={item.label}
-                    style={[
-                      styles.menuItem,
-                      { borderBottomColor: colors.icon },
-                    ]}
+                    style={styles.drawerMenuItem}
                     onPress={() => onNavigate(item.href)}
                   >
                     <MaterialIcons
                       name={item.icon}
-                      size={24}
+                      size={Layout.iconMd}
                       color={colors.icon}
                     />
-                    <Text style={[styles.menuItemText, { color: colors.text }]}>
-                      {item.label}
-                    </Text>
+                    <Text style={styles.drawerMenuItemText}>{item.label}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
             </Animated.View>
-            <Pressable style={styles.dismissArea} onPress={close} />
+            <Pressable style={styles.drawerDismiss} onPress={close} />
           </View>
         </View>
       </Modal>
     </DrawerMenuContext.Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#000",
-  },
-  overlay: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  drawer: {
-    width: "78%",
-    maxWidth: DRAWER_WIDTH,
-  },
-  dismissArea: {
-    flex: 1,
-  },
-  drawerHeader: {
-    backgroundColor: "#4A9ECF",
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-  },
-  drawerHeaderText: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "600",
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  menuItemText: {
-    fontSize: 16,
-  },
-});

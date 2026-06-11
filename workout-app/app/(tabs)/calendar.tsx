@@ -1,9 +1,5 @@
-import { Text, View } from "react-native";
+import { ScreenPlaceholder } from "@/components/screen-placeholder";
 
 export default function Calendar() {
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ color: "white" }}>Calendar</Text>
-    </View>
-  );
+  return <ScreenPlaceholder title="Calendar" />;
 }
