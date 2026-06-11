@@ -26,7 +26,7 @@ export default function TabLayout() {
         }}
       >
         <Tabs.Screen
-          name="index"
+          name="profile"
           options={{
             title: "Profile",
             tabBarIcon: ({ color }) => (
@@ -55,7 +55,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="personal-records"
           options={{
-            href: null,
+            href: null, // hides it fromt the tab bar
             title: "Personal Records",
           }}
         />

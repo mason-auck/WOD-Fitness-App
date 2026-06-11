@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -15,9 +16,20 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+const DRAWER_WIDTH = 320;
+const ANIMATION_DURATION = 280;
 
 type DrawerMenuItem = {
   label: string;
@@ -52,13 +64,54 @@ export function useDrawerMenu() {
 }
 
 export function DrawerMenuProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const colors = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
+  const translateX = useSharedValue(-DRAWER_WIDTH);
+  const backdropOpacity = useSharedValue(0);
+
+  const open = useCallback(() => {
+    translateX.value = -DRAWER_WIDTH;
+    backdropOpacity.value = 0;
+    setVisible(true);
+  }, [translateX, backdropOpacity]);
+
+  const close = useCallback(() => {
+    translateX.value = withTiming(
+      -DRAWER_WIDTH,
+      {
+        duration: ANIMATION_DURATION,
+        easing: Easing.out(Easing.cubic),
+      },
+      (finished) => {
+        if (finished) {
+          runOnJS(setVisible)(false);
+        }
+      },
+    );
+    backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+  }, [translateX, backdropOpacity]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    translateX.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+    backdropOpacity.value = withTiming(0.5, { duration: ANIMATION_DURATION });
+  }, [visible, translateX, backdropOpacity]);
+
+  const drawerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
 
   const onNavigate = (href: Href) => {
     close();
@@ -69,38 +122,53 @@ export function DrawerMenuProvider({ children }: { children: ReactNode }) {
     <DrawerMenuContext.Provider value={{ open, close }}>
       {children}
       <Modal
-        visible={isOpen}
+        visible={visible}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={close}
       >
-        <View style={styles.overlay}>
-          <View
-            style={[styles.drawer, { backgroundColor: colors.background }]}
-          >
-            <View style={styles.drawerHeader}>
-              <Text style={styles.drawerHeaderText}>WOD Log</Text>
-            </View>
-            <ScrollView>
-              {MENU_ITEMS.map((item) => (
-                <Pressable
-                  key={item.label}
-                  style={[styles.menuItem, { borderBottomColor: colors.icon }]}
-                  onPress={() => onNavigate(item.href)}
-                >
-                  <MaterialIcons
-                    name={item.icon}
-                    size={24}
-                    color={colors.icon}
-                  />
-                  <Text style={[styles.menuItemText, { color: colors.text }]}>
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+        <View style={styles.modalContainer}>
+          <Animated.View
+            style={[styles.backdrop, backdropAnimatedStyle]}
+            pointerEvents="none"
+          />
+          <View style={styles.overlay}>
+            <Animated.View
+              style={[
+                styles.drawer,
+                { backgroundColor: colors.background },
+                drawerAnimatedStyle,
+              ]}
+            >
+              <View
+                style={[styles.drawerHeader, { paddingTop: insets.top + 12 }]}
+              >
+                <Text style={styles.drawerHeaderText}>WOD Log</Text>
+              </View>
+              <ScrollView>
+                {MENU_ITEMS.map((item) => (
+                  <Pressable
+                    key={item.label}
+                    style={[
+                      styles.menuItem,
+                      { borderBottomColor: colors.icon },
+                    ]}
+                    onPress={() => onNavigate(item.href)}
+                  >
+                    <MaterialIcons
+                      name={item.icon}
+                      size={24}
+                      color={colors.icon}
+                    />
+                    <Text style={[styles.menuItemText, { color: colors.text }]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
+            <Pressable style={styles.dismissArea} onPress={close} />
           </View>
-          <Pressable style={styles.dismissArea} onPress={close} />
         </View>
       </Modal>
     </DrawerMenuContext.Provider>
@@ -108,21 +176,27 @@ export function DrawerMenuProvider({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+  },
   overlay: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   drawer: {
     width: "78%",
-    maxWidth: 320,
+    maxWidth: DRAWER_WIDTH,
   },
   dismissArea: {
     flex: 1,
   },
   drawerHeader: {
     backgroundColor: "#4A9ECF",
-    paddingVertical: 20,
+    paddingBottom: 20,
     paddingHorizontal: 16,
   },
   drawerHeaderText: {
