@@ -27,7 +27,14 @@ type DrawerMenuItem = {
   icon: React.ComponentProps<typeof MaterialIcons>["name"];
 };
 
-const MENU_ITEMS: DrawerMenuItem[] = [
+const TAB_MENU_ITEMS: DrawerMenuItem[] = [
+  { label: "Profile", href: "/profile", icon: "person" },
+  { label: "WODs", href: "/WODs", icon: "format-list-bulleted" },
+  { label: "Whiteboard", href: "/whiteboard", icon: "edit" },
+];
+
+const SECONDARY_MENU_ITEMS: DrawerMenuItem[] = [
+  { label: "Timer", href: "/timer", icon: "timer" },
   {
     label: "Personal Records",
     href: "/personal-records",
@@ -36,6 +43,11 @@ const MENU_ITEMS: DrawerMenuItem[] = [
   { label: "Calendar", href: "/calendar", icon: "calendar-today" },
   { label: "Skill Level", href: "/skill-level", icon: "star" },
   { label: "Settings", href: "/settings", icon: "settings" },
+];
+
+const MENU_ITEMS: DrawerMenuItem[] = [
+  ...TAB_MENU_ITEMS,
+  ...SECONDARY_MENU_ITEMS,
 ];
 
 type DrawerMenuContextType = {

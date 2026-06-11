@@ -121,6 +121,7 @@ export const Layout = {
   drawerWidthPercent: "78%",
   filterButtonSize: 48,
   avatarSize: 80,
+  avatarSm: 40,
   iconSm: 22,
   iconMd: 24,
   iconLg: 28,

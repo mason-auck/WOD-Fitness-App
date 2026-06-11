@@ -459,6 +459,319 @@ export function createGlobalStyles(colors: ThemeColors) {
     hamburgerHitArea: {
       marginLeft: Spacing.xs,
     },
+
+    // Whiteboard / social feed
+    feedAvatar: {
+      width: Layout.avatarSm,
+      height: Layout.avatarSm,
+      borderRadius: Layout.avatarSm / 2,
+      backgroundColor: colors.accent,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    feedAvatarText: {
+      color: colors.onAccent,
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.semibold,
+    },
+    feedEntryHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.md,
+    },
+    feedWodRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.md,
+      flexWrap: "wrap",
+    },
+    feedAuthorInfo: {
+      flex: 1,
+      gap: 2,
+    },
+    feedAuthorName: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.semibold,
+    },
+    feedTimestamp: {
+      fontSize: FontSize.sm,
+      opacity: 0.6,
+    },
+    feedScoreBox: {
+      padding: Spacing.md,
+      borderRadius: BorderRadius.lg,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+    },
+    feedScoreValue: {
+      fontSize: FontSize.heading,
+      fontWeight: FontWeight.bold,
+      color: colors.accent,
+    },
+    feedScoreLabel: {
+      fontSize: FontSize.sm,
+      opacity: 0.7,
+      marginTop: 2,
+    },
+    feedCaption: {
+      fontSize: FontSize.lg,
+      lineHeight: 22,
+      fontStyle: "italic",
+      opacity: 0.9,
+    },
+    feedNotes: {
+      fontSize: FontSize.base,
+      lineHeight: 20,
+      opacity: 0.8,
+    },
+    feedActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.xl,
+      paddingTop: Spacing.xs,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.icon,
+    },
+    feedActionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.xs + 2,
+    },
+    feedActionText: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.medium,
+    },
+    feedActionTextActive: {
+      color: colors.danger,
+    },
+    feedComment: {
+      gap: 2,
+      paddingVertical: Spacing.xs,
+    },
+    feedCommentAuthor: {
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.semibold,
+    },
+    feedCommentText: {
+      fontSize: FontSize.base,
+      lineHeight: 20,
+    },
+    feedCommentInput: {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: BorderRadius.lg,
+      paddingHorizontal: Spacing.base + 2,
+      paddingVertical: Spacing.md,
+      fontSize: FontSize.xl,
+      marginBottom: Spacing.md,
+      borderColor: colors.icon,
+      backgroundColor: colors.surface,
+      color: colors.text,
+    },
+    feedVisibilityBadge: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: colors.surface,
+    },
+    feedVisibilityText: {
+      fontSize: FontSize.xs,
+      fontWeight: FontWeight.medium,
+      opacity: 0.75,
+    },
+
+    // Timer
+    timerSetupFooter: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.lg,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.icon,
+      backgroundColor: colors.background,
+    },
+    timerSetupScroll: {
+      padding: Spacing.xl,
+      gap: Spacing.lg,
+      paddingBottom: Spacing.md,
+    },
+    timerTypeGroup: {
+      gap: Spacing.sm,
+    },
+    timerTypeList: {
+      gap: Spacing.md,
+    },
+    timerTypeCard: {
+      paddingVertical: Spacing.base + 2,
+      paddingHorizontal: Spacing.lg,
+      borderRadius: BorderRadius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      gap: Spacing.xs,
+    },
+    timerTypeCardSelected: {
+      borderColor: colors.accent,
+      borderWidth: 2,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.lg - 1,
+    },
+    timerTypeCardUnselected: {
+      borderColor: colors.icon,
+    },
+    timerTypeDescription: {
+      fontSize: FontSize.base,
+      opacity: 0.7,
+      lineHeight: 20,
+    },
+    timerStepperRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    timerStepperLabel: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.medium,
+    },
+    timerStepperControls: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.lg,
+    },
+    timerStepperButton: {
+      width: 40,
+      height: 40,
+      borderRadius: BorderRadius.full,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+    timerStepperValue: {
+      fontSize: FontSize.xl,
+      fontWeight: FontWeight.semibold,
+      minWidth: 72,
+      textAlign: "center",
+    },
+    timerStartButton: {
+      paddingVertical: Spacing.base + 2,
+      borderRadius: BorderRadius.xl,
+      alignItems: "center",
+      backgroundColor: colors.accent,
+    },
+    timerStartButtonText: {
+      fontWeight: FontWeight.bold,
+      fontSize: FontSize.title,
+      color: colors.onAccent,
+    },
+    timerFullScreen: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingHorizontal: Spacing.xl,
+    },
+    timerFullScreenHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: Spacing.lg,
+    },
+    timerDisplayArea: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      gap: Spacing.sm,
+      paddingVertical: Spacing.md,
+    },
+    timerBottomPanel: {
+      gap: Spacing.lg,
+      paddingTop: Spacing.md,
+    },
+    timerMainDisplay: {
+      fontSize: 72,
+      fontWeight: FontWeight.bold,
+      color: colors.accent,
+      fontVariant: ["tabular-nums"],
+    },
+    timerPhaseLabel: {
+      fontSize: FontSize.title,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 2,
+    },
+    timerPhaseWork: {
+      color: colors.danger,
+    },
+    timerPhaseRest: {
+      color: colors.accent,
+    },
+    timerMetaText: {
+      fontSize: FontSize.xl,
+      opacity: 0.75,
+    },
+    timerRepRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Spacing.xl,
+    },
+    timerRepCountGroup: {
+      alignItems: "center",
+      minWidth: 80,
+      gap: 2,
+    },
+    timerRepValue: {
+      fontSize: FontSize.hero,
+      fontWeight: FontWeight.bold,
+      fontVariant: ["tabular-nums"],
+    },
+    timerRepLabel: {
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.semibold,
+      opacity: 0.6,
+      letterSpacing: 1,
+    },
+    timerRepButton: {
+      width: 48,
+      height: 48,
+      borderRadius: BorderRadius.full,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+    timerRepButtonDisabled: {
+      opacity: 0.35,
+    },
+    timerRepButtonText: {
+      fontSize: FontSize.heading,
+      fontWeight: FontWeight.bold,
+      color: colors.accent,
+    },
+    timerActionButton: {
+      paddingVertical: Spacing.base + 2,
+      borderRadius: BorderRadius.xl,
+      alignItems: "center",
+    },
+    timerActionStart: {
+      backgroundColor: colors.accent,
+    },
+    timerActionFinish: {
+      backgroundColor: colors.danger,
+    },
+    timerActionButtonText: {
+      fontWeight: FontWeight.bold,
+      fontSize: FontSize.xl,
+      color: colors.onAccent,
+    },
+    timerCountdownOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 10,
+    },
+    timerCountdownText: {
+      fontSize: 120,
+      fontWeight: FontWeight.bold,
+      color: colors.onAccent,
+    },
   });
 }
 

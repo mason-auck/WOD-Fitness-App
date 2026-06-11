@@ -53,6 +53,13 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="timer"
+          options={{
+            href: null,
+            title: "Timer",
+          }}
+        />
+        <Tabs.Screen
           name="personal-records"
           options={{
             href: null,
