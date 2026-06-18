@@ -4,11 +4,12 @@ import { Pressable, ScrollView, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { formatSkillLevelLabel } from "@/constants/skill-level";
+import { useProgress } from "@/contexts/progress-context";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
 const USER = {
   username: "Jasmin",
-  skillLevel: "Level 3 – Intermediate",
   avatar: require("@/assets/images/react-logo.png"),
 };
 
@@ -26,6 +27,8 @@ const RECENT_ACTIVITY = [
 
 export default function Profile() {
   const { styles } = useAppStyles();
+  const { skillProgress } = useProgress();
+  const skillLevelLabel = formatSkillLevelLabel(skillProgress);
 
   const handleLogout = () => {
     alert("Logout pressed");
@@ -45,7 +48,7 @@ export default function Profile() {
             </ThemedText>
             <Link href="/skill-level" asChild>
               <Pressable>
-                <ThemedText type="link">{USER.skillLevel}</ThemedText>
+                <ThemedText type="link">{skillLevelLabel}</ThemedText>
               </Pressable>
             </Link>
           </View>

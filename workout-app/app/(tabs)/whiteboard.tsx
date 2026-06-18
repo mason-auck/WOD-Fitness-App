@@ -285,7 +285,11 @@ export default function WhiteboardScreen() {
         </ThemedText>
 
         <View style={styles.searchBar}>
-          <MaterialIcons name="search" size={Layout.iconSm} color={colors.icon} />
+          <MaterialIcons
+            name="search"
+            size={Layout.iconSm}
+            color={colors.icon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search athletes, WODs, scores, or comments..."
@@ -306,7 +310,11 @@ export default function WhiteboardScreen() {
           style={styles.buttonOutline}
           onPress={() => setShowShareModal(true)}
         >
-          <MaterialIcons name="add" size={Layout.iconSm} color={colors.accent} />
+          <MaterialIcons
+            name="add"
+            size={Layout.iconSm}
+            color={colors.accent}
+          />
           <ThemedText style={styles.buttonOutlineText}>
             Share a Workout
           </ThemedText>
@@ -481,7 +489,10 @@ export default function WhiteboardScreen() {
                 onChangeText={setShareCaption}
               />
 
-              <Pressable style={styles.buttonPrimary} onPress={handleShareWorkout}>
+              <Pressable
+                style={styles.buttonPrimary}
+                onPress={handleShareWorkout}
+              >
                 <ThemedText
                   lightColor={colors.onAccent}
                   darkColor={colors.onAccent}
@@ -557,7 +568,9 @@ function FeedEntryCard({
       </View>
 
       {entry.caption ? (
-        <ThemedText style={styles.feedCaption}>&ldquo;{entry.caption}&rdquo;</ThemedText>
+        <ThemedText style={styles.feedCaption}>
+          &ldquo;{entry.caption}&rdquo;
+        </ThemedText>
       ) : null}
 
       {entry.notes ? (

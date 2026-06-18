@@ -5,14 +5,20 @@ import { DrawerMenuProvider } from "@/components/drawer-menu";
 import { HapticTab } from "@/components/haptic-tab";
 import { HamburgerButton } from "@/components/hamburger-button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ExercisesProvider } from "@/contexts/exercises-context";
+import { ProgressProvider } from "@/contexts/progress-context";
+import { SettingsProvider } from "@/contexts/settings-context";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
 export default function TabLayout() {
   const { colors } = useAppStyles();
 
   return (
-    <DrawerMenuProvider>
-      <Tabs
+    <SettingsProvider>
+      <ExercisesProvider>
+        <ProgressProvider>
+          <DrawerMenuProvider>
+        <Tabs
         initialRouteName="profile"
         screenOptions={{
           tabBarActiveTintColor: colors.tint,
@@ -63,7 +69,7 @@ export default function TabLayout() {
           name="personal-records"
           options={{
             href: null,
-            title: "Personal Records",
+            headerShown: false,
           }}
         />
         <Tabs.Screen
@@ -88,6 +94,9 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </DrawerMenuProvider>
+      </DrawerMenuProvider>
+        </ProgressProvider>
+      </ExercisesProvider>
+    </SettingsProvider>
   );
 }

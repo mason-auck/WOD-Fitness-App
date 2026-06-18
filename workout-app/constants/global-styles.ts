@@ -371,6 +371,9 @@ export function createGlobalStyles(colors: ThemeColors) {
       justifyContent: "flex-end",
       backgroundColor: colors.overlay,
     },
+    modalBackdropPress: {
+      flex: 1,
+    },
     modalContainer: {
       flex: 1,
     },
@@ -771,6 +774,260 @@ export function createGlobalStyles(colors: ThemeColors) {
       fontSize: 120,
       fontWeight: FontWeight.bold,
       color: colors.onAccent,
+    },
+
+    // Skill level
+    skillHeroCard: {
+      paddingVertical: Spacing.xxl,
+      paddingHorizontal: Spacing.xl,
+      borderRadius: BorderRadius.xxl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.icon,
+      alignItems: "center",
+      gap: Spacing.md,
+      backgroundColor: colors.surface,
+    },
+    skillLevelNumber: {
+      fontSize: FontSize.display,
+      lineHeight: FontSize.display + 10,
+      fontWeight: FontWeight.bold,
+      color: colors.accent,
+      textAlign: "center",
+      includeFontPadding: false,
+    },
+    skillLevelTitle: {
+      fontSize: FontSize.title,
+      lineHeight: FontSize.title + 8,
+      fontWeight: FontWeight.semibold,
+      textAlign: "center",
+      includeFontPadding: false,
+    },
+    skillProgressTrack: {
+      height: 12,
+      borderRadius: BorderRadius.full,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.icon,
+      overflow: "hidden",
+      width: "100%",
+    },
+    skillProgressFill: {
+      height: "100%",
+      borderRadius: BorderRadius.full,
+      backgroundColor: colors.accent,
+    },
+    skillXpText: {
+      fontSize: FontSize.base,
+      opacity: 0.75,
+      textAlign: "center",
+    },
+    skillLevelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.md,
+      padding: Spacing.lg,
+      borderRadius: BorderRadius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.icon,
+    },
+    skillLevelRowCurrent: {
+      borderColor: colors.accent,
+      borderWidth: 2,
+      backgroundColor: colors.surface,
+    },
+    skillLevelRowComplete: {
+      opacity: 0.85,
+    },
+    skillLevelRowLocked: {
+      opacity: 0.5,
+    },
+    skillLevelBadge: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.icon,
+    },
+    skillLevelBadgeCurrent: {
+      backgroundColor: colors.accent,
+      borderColor: colors.accent,
+    },
+    skillLevelBadgeText: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.bold,
+    },
+    skillLevelBadgeTextOnAccent: {
+      color: colors.onAccent,
+    },
+    skillEarnRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: Spacing.sm,
+    },
+
+    // Settings
+    settingsSection: {
+      gap: Spacing.md,
+    },
+    settingsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: Spacing.lg,
+    },
+    settingsRowInfo: {
+      flex: 1,
+      gap: Spacing.xs,
+    },
+    settingsRowDescription: {
+      fontSize: FontSize.base,
+      opacity: 0.7,
+      lineHeight: 20,
+    },
+    settingsUnitPicker: {
+      flexDirection: "row",
+      gap: Spacing.sm,
+    },
+    settingsUnitOption: {
+      flex: 1,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      borderRadius: BorderRadius.lg,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.icon,
+      alignItems: "center",
+      gap: Spacing.xs,
+    },
+    settingsUnitOptionSelected: {
+      borderColor: colors.accent,
+      borderWidth: 2,
+      backgroundColor: colors.surface,
+    },
+    settingsUnitOptionLabel: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.semibold,
+    },
+    settingsUnitOptionDescription: {
+      fontSize: FontSize.sm,
+      opacity: 0.7,
+    },
+
+    // Calendar
+    calendarMonthHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    calendarWeekRow: {
+      flexDirection: "row",
+      marginBottom: Spacing.xs,
+    },
+    calendarWeekday: {
+      flex: 1,
+      textAlign: "center",
+      fontSize: FontSize.sm,
+      fontWeight: FontWeight.semibold,
+      opacity: 0.6,
+    },
+    calendarGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+    },
+    calendarDayCell: {
+      width: "14.28%",
+      aspectRatio: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: BorderRadius.full,
+    },
+    calendarDaySelected: {
+      backgroundColor: colors.accent,
+    },
+    calendarDayToday: {
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    calendarDayText: {
+      fontSize: FontSize.base,
+      fontWeight: FontWeight.medium,
+    },
+    calendarDayTextSelected: {
+      color: colors.onAccent,
+      fontWeight: FontWeight.semibold,
+    },
+    calendarDayDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 2.5,
+      backgroundColor: colors.accent,
+      marginTop: 2,
+    },
+    calendarDayDotSelected: {
+      backgroundColor: colors.onAccent,
+    },
+    calendarLogsHeader: {
+      marginTop: Spacing.xs,
+    },
+    calendarLogCard: {
+      padding: Spacing.lg,
+      borderRadius: BorderRadius.xl,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.icon,
+      gap: Spacing.sm,
+    },
+    calendarLogHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: Spacing.md,
+    },
+    calendarLogInfo: {
+      flex: 1,
+      gap: Spacing.xs,
+    },
+    calendarLogBadge: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: colors.surface,
+    },
+    calendarLogBadgeWod: {
+      backgroundColor: colors.accent,
+    },
+    calendarLogBadgeText: {
+      fontSize: FontSize.xs,
+      fontWeight: FontWeight.semibold,
+    },
+    calendarLogScore: {
+      fontSize: FontSize.xl,
+      fontWeight: FontWeight.semibold,
+      color: colors.accent,
+    },
+    calendarFab: {
+      position: "absolute",
+      right: Spacing.xl,
+      bottom: Spacing.xl,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.accent,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    calendarPickerItem: {
+      paddingVertical: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.icon,
+      gap: 2,
     },
   });
 }
