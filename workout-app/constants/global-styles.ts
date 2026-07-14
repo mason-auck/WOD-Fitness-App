@@ -460,7 +460,7 @@ export function createGlobalStyles(colors: ThemeColors) {
 
     // Header chrome
     hamburgerHitArea: {
-      marginLeft: Spacing.xs,
+      marginLeft: Spacing.sm,
     },
 
     // Whiteboard / social feed
