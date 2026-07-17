@@ -1,17 +1,16 @@
 import { Image } from "expo-image";
 import { Link } from "expo-router";
+import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { formatSkillLevelLabel } from "@/constants/skill-level";
+import { useAuth } from "@/contexts/auth-context";
 import { useProgress } from "@/contexts/progress-context";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
-const USER = {
-  username: "Jasmin",
-  avatar: require("@/assets/images/react-logo.png"),
-};
+const AVATAR = require("@/assets/images/react-logo.png");
 
 const STATS = [
   { label: "Workouts", value: "42" },
@@ -28,10 +27,23 @@ const RECENT_ACTIVITY = [
 export default function Profile() {
   const { styles } = useAppStyles();
   const { skillProgress } = useProgress();
+  const { user, signOut } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
   const skillLevelLabel = formatSkillLevelLabel(skillProgress);
 
-  const handleLogout = () => {
-    alert("Logout pressed");
+  const displayName =
+    (user?.user_metadata?.display_name as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Athlete";
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not log out");
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -41,10 +53,10 @@ export default function Profile() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.profileHeader}>
-          <Image source={USER.avatar} style={styles.avatar} />
+          <Image source={AVATAR} style={styles.avatar} />
           <View style={styles.profileInfo}>
             <ThemedText type="title" style={styles.username}>
-              {USER.username}
+              {displayName}
             </ThemedText>
             <Link href="/skill-level" asChild>
               <Pressable>
@@ -88,8 +100,14 @@ export default function Profile() {
           ))}
         </View>
 
-        <Pressable style={styles.buttonDanger} onPress={handleLogout}>
-          <ThemedText style={styles.textDanger}>Log Out</ThemedText>
+        <Pressable
+          style={[styles.buttonDanger, loggingOut && { opacity: 0.7 }]}
+          onPress={handleLogout}
+          disabled={loggingOut}
+        >
+          <ThemedText style={styles.textDanger}>
+            {loggingOut ? "Logging out…" : "Log Out"}
+          </ThemedText>
         </Pressable>
       </ScrollView>
     </ThemedView>
