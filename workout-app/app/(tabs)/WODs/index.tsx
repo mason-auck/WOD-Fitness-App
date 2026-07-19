@@ -1,5 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -11,8 +12,8 @@ import {
   type WodCategory,
   type WodType,
 } from "@/constants/wods";
-import { getWods, createWod } from "@/lib/api/wods-api";
 import { Layout } from "@/constants/theme";
+import { createWod, getWods } from "@/lib/api/wods-api";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
 type WodFilter = "Favorites" | WodType | WodCategory;
@@ -25,8 +26,6 @@ const FILTER_SECTIONS: { title: string; filters: WodFilter[] }[] = [
   { title: "Category", filters: WOD_CATEGORIES },
 ];
 
-type WodOption = "timer" | "log" | "history" | "favorite";
-
 function wodMatchesFilter(wod: Wod, filter: WodFilter): boolean {
   if (filter === "Favorites") return wod.favorited;
   if (WOD_TYPES.includes(filter as WodType)) return wod.type === filter;
@@ -35,45 +34,36 @@ function wodMatchesFilter(wod: Wod, filter: WodFilter): boolean {
 
 export default function WODsScreen() {
   const { colors, styles } = useAppStyles();
+  const router = useRouter();
 
   const [wods, setWods] = useState<Wod[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<WodFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [optionsWod, setOptionsWod] = useState<Wod | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<WodType>("For Time");
   const [newDescription, setNewDescription] = useState("");
+  const [creating, setCreating] = useState(false);
 
-  // Load WODs from backend
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchWods = async () => {
-      try {
-        const data = await getWods();
-        if (!cancelled) {
-          setWods(data as Wod[]);
-        }
-      } catch (error) {
-        console.error("Error fetching WODs:", error);
-        if (!cancelled) {
-          setWods([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchWods();
-
-    return () => {
-      cancelled = true;
-    };
+  const loadWods = useCallback(async () => {
+    try {
+      const data = await getWods();
+      setWods(data as Wod[]);
+    } catch (error) {
+      console.error("Error fetching WODs:", error);
+      setWods([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadWods();
+    }, [loadWods]),
+  );
 
   const filteredWods = useMemo(() => {
     let result = wods;
@@ -108,40 +98,13 @@ export default function WODsScreen() {
 
   const clearFilters = () => setActiveFilters([]);
 
-  const handleWodOption = (option: WodOption) => {
-    if (!optionsWod) return;
-
-    switch (option) {
-      case "timer":
-        alert(`Start timer for ${optionsWod.title} — coming soon`);
-        break;
-      case "log":
-        alert(`Log score for ${optionsWod.title} — coming soon`);
-        break;
-      case "history":
-        alert(`View history for ${optionsWod.title} — coming soon`);
-        break;
-      case "favorite":
-        setWods((current) =>
-          current.map((wod) =>
-            wod.id === optionsWod.id
-              ? { ...wod, favorited: !wod.favorited }
-              : wod,
-          ),
-        );
-        break;
-    }
-
-    setOptionsWod(null);
-  };
-
   const resetCreateForm = () => {
     setNewTitle("");
     setNewType("For Time");
     setNewDescription("");
   };
 
-  const handleCreateWod = () => {
+  const handleCreateWod = async () => {
     const title = newTitle.trim();
     const description = newDescription.trim();
 
@@ -150,21 +113,23 @@ export default function WODsScreen() {
       return;
     }
 
-    setWods((current) => [
-      {
-        id: Date.now().toString(),
+    setCreating(true);
+    try {
+      const created = await createWod({
         title,
         type: newType,
-        category: "Custom",
         description,
-        favorited: false,
-        isUserCreated: true,
-      },
-      ...current,
-    ]);
-
-    setShowCreateModal(false);
-    resetCreateForm();
+      });
+      setWods((current) => [created, ...current]);
+      setShowCreateModal(false);
+      resetCreateForm();
+      router.push(`/WODs/${created.id}` as Href);
+    } catch (error) {
+      console.error("Error creating WOD:", error);
+      alert(error instanceof Error ? error.message : "Could not create WOD");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const filtersActive = activeFilters.length > 0;
@@ -273,10 +238,12 @@ export default function WODsScreen() {
         </Pressable>
 
         <ThemedText type="defaultSemiBold" style={styles.listLabel}>
-          {filteredWods.length} WOD{filteredWods.length === 1 ? "" : "s"}
+          {loading
+            ? "Loading…"
+            : `${filteredWods.length} WOD${filteredWods.length === 1 ? "" : "s"}`}
         </ThemedText>
 
-        {filteredWods.length === 0 ? (
+        {!loading && filteredWods.length === 0 ? (
           <View style={styles.emptyState}>
             <ThemedText style={styles.emptyStateText}>
               No WODs match your search or filters. Try adjusting them.
@@ -285,7 +252,13 @@ export default function WODsScreen() {
         ) : (
           <View style={styles.listGapSm}>
             {filteredWods.map((wod) => (
-              <View key={wod.id} style={styles.card}>
+              <Pressable
+                key={wod.id}
+                style={styles.card}
+                onPress={() => router.push(`/WODs/${wod.id}` as Href)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${wod.title}`}
+              >
                 <View style={styles.rowBetweenStart}>
                   <View style={styles.wodTitleRow}>
                     <ThemedText type="defaultSemiBold" style={styles.wodTitle}>
@@ -299,17 +272,11 @@ export default function WODsScreen() {
                       />
                     )}
                   </View>
-                  <Pressable
-                    onPress={() => setOptionsWod(wod)}
-                    hitSlop={8}
-                    accessibilityLabel={`Options for ${wod.title}`}
-                  >
-                    <MaterialIcons
-                      name="more-vert"
-                      size={Layout.iconMd}
-                      color={colors.icon}
-                    />
-                  </Pressable>
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={Layout.iconMd}
+                    color={colors.icon}
+                  />
                 </View>
 
                 <View style={styles.badgeRow}>
@@ -329,10 +296,10 @@ export default function WODsScreen() {
                   </View>
                 </View>
 
-                <ThemedText style={styles.description}>
+                <ThemedText style={styles.description} numberOfLines={3}>
                   {wod.description}
                 </ThemedText>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
@@ -409,54 +376,6 @@ export default function WODsScreen() {
       </Modal>
 
       <Modal
-        visible={optionsWod !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setOptionsWod(null)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setOptionsWod(null)}
-        >
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <ThemedText type="defaultSemiBold" style={styles.sheetTitle}>
-              {optionsWod?.title}
-            </ThemedText>
-
-            <OptionRow
-              icon="timer"
-              label="Start Timer"
-              onPress={() => handleWodOption("timer")}
-            />
-            <OptionRow
-              icon="edit-note"
-              label="Log Score"
-              onPress={() => handleWodOption("log")}
-            />
-            <OptionRow
-              icon="history"
-              label="View History"
-              onPress={() => handleWodOption("history")}
-            />
-            <OptionRow
-              icon={optionsWod?.favorited ? "star" : "star-outline"}
-              label={
-                optionsWod?.favorited ? "Remove from Favorites" : "Favorite WOD"
-              }
-              onPress={() => handleWodOption("favorite")}
-            />
-
-            <Pressable
-              style={styles.buttonCancel}
-              onPress={() => setOptionsWod(null)}
-            >
-              <ThemedText style={styles.textMuted}>Cancel</ThemedText>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      <Modal
         visible={showCreateModal}
         transparent
         animationType="slide"
@@ -521,13 +440,17 @@ export default function WODsScreen() {
                 textAlignVertical="top"
               />
 
-              <Pressable style={styles.buttonPrimary} onPress={handleCreateWod}>
+              <Pressable
+                style={[styles.buttonPrimary, creating && { opacity: 0.7 }]}
+                onPress={handleCreateWod}
+                disabled={creating}
+              >
                 <ThemedText
                   lightColor={colors.onAccent}
                   darkColor={colors.onAccent}
                   style={styles.buttonPrimaryText}
                 >
-                  Save WOD
+                  {creating ? "Saving…" : "Save WOD"}
                 </ThemedText>
               </Pressable>
 
@@ -545,24 +468,5 @@ export default function WODsScreen() {
         </View>
       </Modal>
     </ThemedView>
-  );
-}
-
-function OptionRow({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: ComponentProps<typeof MaterialIcons>["name"];
-  label: string;
-  onPress: () => void;
-}) {
-  const { colors, styles } = useAppStyles();
-
-  return (
-    <Pressable style={styles.optionRow} onPress={onPress}>
-      <MaterialIcons name={icon} size={Layout.iconSm} color={colors.accent} />
-      <ThemedText>{label}</ThemedText>
-    </Pressable>
   );
 }

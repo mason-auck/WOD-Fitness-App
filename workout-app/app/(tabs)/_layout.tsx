@@ -44,6 +44,7 @@ export default function TabLayout() {
           name="WODs"
           options={{
             title: "WODs",
+            headerShown: false,
             tabBarIcon: ({ color }) => (
               <IconSymbol size={28} name="list.bullet" color={color} />
             ),

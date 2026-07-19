@@ -27,7 +27,15 @@ export function createWod(body: {
   }) as Promise<Wod>;
 }
 
-// get a single wod by id
+/** Get a single WOD by id. */
 export async function getWodById(id: string) {
   return apiFetch(`/api/v1/wods/${id}`) as Promise<Wod>;
+}
+
+export async function favoriteWod(id: string) {
+  return apiFetch(`/api/v1/wods/${id}/favorite`, { method: "POST" });
+}
+
+export async function unfavoriteWod(id: string) {
+  return apiFetch(`/api/v1/wods/${id}/favorite`, { method: "DELETE" });
 }
