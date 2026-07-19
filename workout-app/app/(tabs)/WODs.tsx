@@ -1,12 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useMemo, useState, type ComponentProps } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  TextInput,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
+import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -18,6 +12,7 @@ import {
   type WodCategory,
   type WodType,
 } from "@/constants/wods";
+import { getWods, createWod } from "@/lib/api/wods-api";
 import { Layout } from "@/constants/theme";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
@@ -42,7 +37,8 @@ function wodMatchesFilter(wod: Wod, filter: WodFilter): boolean {
 export default function WODsScreen() {
   const { colors, styles } = useAppStyles();
 
-  const [wods, setWods] = useState<Wod[]>(INITIAL_WODS);
+  const [wods, setWods] = useState<Wod[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<WodFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -51,6 +47,34 @@ export default function WODsScreen() {
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<WodType>("For Time");
   const [newDescription, setNewDescription] = useState("");
+
+  // Load WODs from backend
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchWods = async () => {
+      try {
+        const data = await getWods();
+        if (!cancelled) {
+          setWods(data as Wod[]);
+        }
+      } catch (error) {
+        console.error("Error fetching WODs:", error);
+        if (!cancelled) {
+          setWods([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+    fetchWods();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredWods = useMemo(() => {
     let result = wods;
@@ -157,7 +181,11 @@ export default function WODsScreen() {
 
         <View style={styles.searchRow}>
           <View style={styles.searchBar}>
-            <MaterialIcons name="search" size={Layout.iconSm} color={colors.icon} />
+            <MaterialIcons
+              name="search"
+              size={Layout.iconSm}
+              color={colors.icon}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search WODs by name, type, or keyword..."
@@ -235,7 +263,11 @@ export default function WODsScreen() {
           style={styles.buttonOutline}
           onPress={() => setShowCreateModal(true)}
         >
-          <MaterialIcons name="add" size={Layout.iconSm} color={colors.accent} />
+          <MaterialIcons
+            name="add"
+            size={Layout.iconSm}
+            color={colors.accent}
+          />
           <ThemedText style={styles.buttonOutlineText}>
             Create Your Own WOD
           </ThemedText>
@@ -348,9 +380,7 @@ export default function WODsScreen() {
                             lightColor={
                               selected ? colors.onAccent : colors.text
                             }
-                            darkColor={
-                              selected ? colors.onAccent : colors.text
-                            }
+                            darkColor={selected ? colors.onAccent : colors.text}
                             style={styles.chipText}
                           >
                             {filter}
@@ -464,9 +494,7 @@ export default function WODsScreen() {
                       key={type}
                       style={[
                         styles.chip,
-                        selected
-                          ? styles.chipSelected
-                          : styles.chipUnselected,
+                        selected ? styles.chipSelected : styles.chipUnselected,
                       ]}
                       onPress={() => setNewType(type)}
                     >
