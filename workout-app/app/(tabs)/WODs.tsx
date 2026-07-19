@@ -5,7 +5,6 @@ import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
-  INITIAL_WODS,
   WOD_CATEGORIES,
   WOD_TYPES,
   type Wod,
