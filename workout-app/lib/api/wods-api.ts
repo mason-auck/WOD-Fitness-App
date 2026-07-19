@@ -26,3 +26,8 @@ export function createWod(body: {
     body: JSON.stringify(body),
   }) as Promise<Wod>;
 }
+
+// get a single wod by id
+export async function getWodById(id: string) {
+  return apiFetch(`/api/v1/wods/${id}`) as Promise<Wod>;
+}
