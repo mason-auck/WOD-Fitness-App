@@ -20,10 +20,19 @@ export type PersonalRecord = {
   currentPr: string;
 };
 
-export function getCurrentPr(exercise: Exercise): string | null {
-  if (exercise.history.length === 0) return null;
+/** Works with mock Exercise and API ExerciseDto (which may only send currentPr). */
+export function getCurrentPr(exercise: {
+  currentPr?: string | null;
+  history?: { value: string; dateKey: string }[];
+}): string | null {
+  if (exercise.currentPr != null && exercise.currentPr !== "") {
+    return exercise.currentPr;
+  }
 
-  const sorted = [...exercise.history].sort((a, b) =>
+  const history = exercise.history ?? [];
+  if (history.length === 0) return null;
+
+  const sorted = [...history].sort((a, b) =>
     b.dateKey.localeCompare(a.dateKey),
   );
   return sorted[0].value;

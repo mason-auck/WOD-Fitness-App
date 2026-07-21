@@ -2,6 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -14,10 +15,14 @@ import { KeyboardSheet } from "@/components/keyboard-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { formatSelectedDate } from "@/constants/calendar";
-import { getCurrentPr } from "@/constants/personal-records";
 import { Layout } from "@/constants/theme";
-import { useExercises } from "@/contexts/exercises-context";
-import { useProgress } from "@/contexts/progress-context";
+import {
+  deleteExercise,
+  getPersonalRecordById,
+  logPr,
+  renameExercise,
+  type ExerciseDto,
+} from "@/lib/api/exercise-api";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
 type ActionModal = "log" | "rename" | null;
@@ -27,27 +32,45 @@ export default function ExerciseDetailScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, styles } = useAppStyles();
-  const { getExercise, logPr, renameExercise, deleteExercise } = useExercises();
-  const { awardPrXp } = useProgress();
 
-  const exercise = getExercise(id);
-
+  const [exercise, setExercise] = useState<ExerciseDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [actionModal, setActionModal] = useState<ActionModal>(null);
   const [valueInput, setValueInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [renameInput, setRenameInput] = useState("");
 
-  const currentPr = useMemo(
-    () => (exercise ? getCurrentPr(exercise) : null),
-    [exercise],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    if (!id) return;
 
-  const sortedHistory = useMemo(() => {
-    if (!exercise) return [];
-    return [...exercise.history].sort((a, b) =>
-      b.dateKey.localeCompare(a.dateKey),
-    );
-  }, [exercise]);
+    async function loadExercise() {
+      setLoading(true);
+      try {
+        const data = await getPersonalRecordById(id);
+        if (!cancelled) {
+          setExercise(data);
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) {
+          setExercise(null);
+          router.replace("/personal-records");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadExercise();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, router]);
 
   useEffect(() => {
     if (exercise) {
@@ -55,53 +78,77 @@ export default function ExerciseDetailScreen() {
     }
   }, [exercise, navigation]);
 
-  useEffect(() => {
-    if (!exercise) {
-      router.replace("/personal-records");
-    }
-  }, [exercise, router]);
-
-  if (!exercise) {
-    return null;
-  }
+  const sortedHistory = useMemo(() => {
+    if (!exercise?.history) return [];
+    return [...exercise.history].sort((a, b) =>
+      String(b.dateKey).localeCompare(String(a.dateKey)),
+    );
+  }, [exercise]);
 
   const openLogModal = () => {
-    setValueInput(currentPr ?? "");
+    setValueInput(exercise?.currentPr ?? "");
     setNotesInput("");
     setActionModal("log");
   };
 
   const openRenameModal = () => {
+    if (!exercise) return;
     setRenameInput(exercise.name);
     setActionModal("rename");
   };
 
-  const handleLogPr = () => {
+  const handleLogPr = async () => {
+    if (!exercise) return;
     const value = valueInput.trim();
     if (!value) {
       alert("Please enter a value.");
       return;
     }
 
-    logPr(exercise.id, value, { notes: notesInput });
-    awardPrXp();
-    setActionModal(null);
-    setValueInput("");
-    setNotesInput("");
+    setSaving(true);
+    try {
+      const notes = notesInput.trim();
+      await logPr(exercise.id, {
+        value,
+        ...(notes ? { notes } : {}),
+      });
+      const refreshed = await getPersonalRecordById(exercise.id);
+      setExercise(refreshed);
+      setActionModal(null);
+      setValueInput("");
+      setNotesInput("");
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Could not log PR");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleRename = () => {
+  const handleRename = async () => {
+    if (!exercise) return;
     const name = renameInput.trim();
     if (!name) {
       alert("Please enter a name.");
       return;
     }
 
-    renameExercise(exercise.id, name);
-    setActionModal(null);
+    setSaving(true);
+    try {
+      const updated = await renameExercise(exercise.id, name);
+      setExercise(updated);
+      setActionModal(null);
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Could not rename exercise");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = () => {
+    if (!exercise) return;
+
     Alert.alert(
       "Delete exercise?",
       `"${exercise.name}" and all of its PR history will be removed.`,
@@ -110,9 +157,18 @@ export default function ExerciseDetailScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            deleteExercise(exercise.id);
-            router.replace("/personal-records");
+          onPress: async () => {
+            try {
+              await deleteExercise(exercise.id);
+              router.replace("/personal-records");
+            } catch (error) {
+              console.error(error);
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Could not delete exercise",
+              );
+            }
           },
         },
       ],
@@ -120,11 +176,24 @@ export default function ExerciseDetailScreen() {
   };
 
   const closeModal = () => {
+    if (saving) return;
     setActionModal(null);
     setValueInput("");
     setNotesInput("");
     setRenameInput("");
   };
+
+  if (loading) {
+    return (
+      <ThemedView style={[styles.page, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </ThemedView>
+    );
+  }
+
+  if (!exercise) {
+    return null;
+  }
 
   return (
     <ThemedView style={styles.page}>
@@ -135,7 +204,7 @@ export default function ExerciseDetailScreen() {
       >
         <View style={styles.feedScoreBox}>
           <ThemedText style={styles.feedScoreValue}>
-            {currentPr ?? "No PR yet"}
+            {exercise.currentPr ?? "No PR yet"}
           </ThemedText>
           <ThemedText style={styles.feedScoreLabel}>Current PR</ThemedText>
         </View>
@@ -178,7 +247,7 @@ export default function ExerciseDetailScreen() {
                 <View style={styles.calendarLogHeader}>
                   <ThemedText type="defaultSemiBold">{entry.value}</ThemedText>
                   <ThemedText style={styles.activityDate}>
-                    {formatSelectedDate(entry.dateKey)}
+                    {formatSelectedDate(String(entry.dateKey))}
                   </ThemedText>
                 </View>
                 {entry.notes ? (
@@ -208,6 +277,7 @@ export default function ExerciseDetailScreen() {
             placeholderTextColor={colors.icon}
             value={valueInput}
             onChangeText={setValueInput}
+            editable={!saving}
           />
 
           <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
@@ -220,15 +290,20 @@ export default function ExerciseDetailScreen() {
             multiline
             numberOfLines={3}
             textAlignVertical="top"
+            editable={!saving}
           />
 
-          <Pressable style={styles.buttonPrimary} onPress={handleLogPr}>
+          <Pressable
+            style={[styles.buttonPrimary, saving && { opacity: 0.6 }]}
+            onPress={handleLogPr}
+            disabled={saving}
+          >
             <ThemedText
               lightColor={colors.onAccent}
               darkColor={colors.onAccent}
               style={styles.buttonPrimaryText}
             >
-              Save PR
+              {saving ? "Saving…" : "Save PR"}
             </ThemedText>
           </Pressable>
 
@@ -257,15 +332,20 @@ export default function ExerciseDetailScreen() {
             value={renameInput}
             onChangeText={setRenameInput}
             autoFocus
+            editable={!saving}
           />
 
-          <Pressable style={styles.buttonPrimary} onPress={handleRename}>
+          <Pressable
+            style={[styles.buttonPrimary, saving && { opacity: 0.6 }]}
+            onPress={handleRename}
+            disabled={saving}
+          >
             <ThemedText
               lightColor={colors.onAccent}
               darkColor={colors.onAccent}
               style={styles.buttonPrimaryText}
             >
-              Save Name
+              {saving ? "Saving…" : "Save Name"}
             </ThemedText>
           </Pressable>
 

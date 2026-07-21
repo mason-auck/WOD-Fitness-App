@@ -1,6 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter, type Href } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -13,19 +13,53 @@ import {
 import { KeyboardSheet } from "@/components/keyboard-sheet";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { getCurrentPr } from "@/constants/personal-records";
+import {
+  ExerciseDto,
+  getPersonalRecords,
+  createExercise,
+} from "@/lib/api/exercise-api";
 import { Layout } from "@/constants/theme";
-import { useExercises } from "@/contexts/exercises-context";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
 export default function PersonalRecordsScreen() {
   const { colors, styles } = useAppStyles();
   const router = useRouter();
-  const { exercises, addExercise } = useExercises();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [exercises, setExercises] = useState<ExerciseDto[]>([]);
+
+  // load personal records when the component starts
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPersonalRecords() {
+      try {
+        const data = await getPersonalRecords();
+        if (!cancelled) {
+          setExercises(data);
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) {
+          setExercises([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadPersonalRecords();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredExercises = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -38,17 +72,25 @@ export default function PersonalRecordsScreen() {
     );
   }, [exercises, searchQuery]);
 
-  const handleCreateExercise = () => {
+  const handleCreateExercise = async () => {
     const name = newExerciseName.trim();
     if (!name) {
       alert("Please enter an exercise name.");
       return;
     }
 
-    const id = addExercise(name);
-    setShowCreateModal(false);
-    setNewExerciseName("");
-    router.push(`/personal-records/${id}` as Href);
+    try {
+      const created = await createExercise({ name });
+      setExercises((prev) => [...prev, created]);
+      setShowCreateModal(false);
+      setNewExerciseName("");
+      router.push(`/personal-records/${created.id}` as Href);
+    } catch (error) {
+      console.error(error);
+      alert(
+        error instanceof Error ? error.message : "Could not create exercise",
+      );
+    }
   };
 
   return (
@@ -63,7 +105,11 @@ export default function PersonalRecordsScreen() {
         </ThemedText>
 
         <View style={styles.searchBar}>
-          <MaterialIcons name="search" size={Layout.iconSm} color={colors.icon} />
+          <MaterialIcons
+            name="search"
+            size={Layout.iconSm}
+            color={colors.icon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search exercises..."
@@ -94,8 +140,6 @@ export default function PersonalRecordsScreen() {
         ) : (
           <View style={styles.listGapSm}>
             {filteredExercises.map((exercise) => {
-              const currentPr = getCurrentPr(exercise);
-
               return (
                 <Pressable
                   key={exercise.id}
@@ -105,13 +149,15 @@ export default function PersonalRecordsScreen() {
                   }
                 >
                   <View style={styles.calendarLogInfo}>
-                    <ThemedText type="defaultSemiBold">{exercise.name}</ThemedText>
+                    <ThemedText type="defaultSemiBold">
+                      {exercise.name}
+                    </ThemedText>
                     <ThemedText style={styles.activityDate}>
                       {exercise.category}
                     </ThemedText>
                   </View>
                   <ThemedText style={styles.calendarLogScore}>
-                    {currentPr ?? "—"}
+                    {exercise.currentPr ?? "—"}
                   </ThemedText>
                 </Pressable>
               );
@@ -160,7 +206,10 @@ export default function PersonalRecordsScreen() {
             autoFocus
           />
 
-          <Pressable style={styles.buttonPrimary} onPress={handleCreateExercise}>
+          <Pressable
+            style={styles.buttonPrimary}
+            onPress={handleCreateExercise}
+          >
             <ThemedText
               lightColor={colors.onAccent}
               darkColor={colors.onAccent}
