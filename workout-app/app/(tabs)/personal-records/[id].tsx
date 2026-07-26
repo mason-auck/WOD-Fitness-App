@@ -101,8 +101,7 @@ export default function ExerciseDetailScreen() {
         <HeaderBackButton
           {...props}
           tintColor={colors.text}
-          label=""
-          labelVisible={false}
+          displayMode="minimal"
           onPress={goBack}
         />
       ),
