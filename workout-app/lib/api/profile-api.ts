@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { SkillProgress } from "@/constants/skill-level";
+import type { SkillLevel, SkillProgress } from "@/constants/skill-level";
 
 export type Profile = {
   id: string;
@@ -45,4 +45,8 @@ export async function getRecentActivity() {
 
 export async function getMeSkill() {
   return apiFetch("/api/v1/me/skill") as Promise<MeSkill>;
+}
+
+export async function getSkillLevels() {
+  return apiFetch("/api/v1/skill-levels") as Promise<SkillLevel[]>;
 }

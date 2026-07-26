@@ -1,21 +1,111 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { ScrollView, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
-  SKILL_LEVELS,
   XP_PER_PR,
   XP_PER_WOD,
+  type SkillLevel,
+  type SkillProgress,
 } from "@/constants/skill-level";
-import { useProgress } from "@/contexts/progress-context";
 import { useAppStyles } from "@/hooks/use-app-styles";
+import {
+  getMeSkill,
+  getSkillLevels,
+} from "@/lib/api/profile-api";
 
 export default function SkillLevelScreen() {
   const { colors, styles } = useAppStyles();
-  const { skillProgress, totalXp, wodsLogged, prsLogged } = useProgress();
-  const { currentLevel, nextLevel, xpIntoLevel, xpToNextLevel, progressPercent, isMaxLevel } =
-    skillProgress;
+
+  const [levels, setLevels] = useState<SkillLevel[]>([]);
+  const [totalXp, setTotalXp] = useState(0);
+  const [wodsLogged, setWodsLogged] = useState(0);
+  const [prsLogged, setPrsLogged] = useState(0);
+  const [skillProgress, setSkillProgress] = useState<SkillProgress | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSkill = useCallback(async () => {
+    setError(null);
+    try {
+      const [meSkill, skillLevels] = await Promise.all([
+        getMeSkill(),
+        getSkillLevels(),
+      ]);
+      setTotalXp(meSkill.totalXp);
+      setWodsLogged(meSkill.wodsLogged);
+      setPrsLogged(meSkill.prsLogged);
+      setSkillProgress(meSkill.skillProgress);
+      setLevels(skillLevels);
+    } catch (err) {
+      console.error("Error loading skill level:", err);
+      setError(
+        err instanceof Error ? err.message : "Could not load skill level",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      void loadSkill();
+    }, [loadSkill]),
+  );
+
+  if (loading) {
+    return (
+      <ThemedView style={[styles.page, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </ThemedView>
+    );
+  }
+
+  if (error || !skillProgress) {
+    return (
+      <ThemedView style={[styles.page, { justifyContent: "center" }]}>
+        <ThemedText style={{ textAlign: "center", marginBottom: 16 }}>
+          {error ?? "Could not load skill level"}
+        </ThemedText>
+        <Pressable
+          style={styles.buttonPrimary}
+          onPress={() => {
+            setLoading(true);
+            void loadSkill();
+          }}
+        >
+          <ThemedText
+            lightColor={colors.onAccent}
+            darkColor={colors.onAccent}
+            style={styles.buttonPrimaryText}
+          >
+            Retry
+          </ThemedText>
+        </Pressable>
+      </ThemedView>
+    );
+  }
+
+  const {
+    currentLevel,
+    nextLevel,
+    xpIntoLevel,
+    xpToNextLevel,
+    progressPercent,
+    isMaxLevel,
+  } = skillProgress;
 
   return (
     <ThemedView style={styles.page}>
@@ -74,7 +164,7 @@ export default function SkillLevelScreen() {
           All Levels
         </ThemedText>
         <View style={styles.listGapSm}>
-          {SKILL_LEVELS.map((level) => {
+          {levels.map((level) => {
             const isCurrent = level.level === currentLevel.level;
             const isComplete = totalXp >= level.xpRequired && !isCurrent;
             const isLocked = totalXp < level.xpRequired;
