@@ -1,5 +1,11 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { HeaderBackButton } from "@react-navigation/elements";
+import {
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+  type Href,
+} from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -28,10 +34,11 @@ import { useAppStyles } from "@/hooks/use-app-styles";
 type ActionModal = "log" | "rename" | null;
 
 export default function ExerciseDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const { colors, styles } = useAppStyles();
+  const fromWorkouts = from === "workouts";
 
   const [exercise, setExercise] = useState<ExerciseDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +47,18 @@ export default function ExerciseDetailScreen() {
   const [valueInput, setValueInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [renameInput, setRenameInput] = useState("");
+
+  const goBack = () => {
+    if (fromWorkouts) {
+      router.replace("/workouts?tab=strength" as Href);
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/personal-records" as Href);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +75,7 @@ export default function ExerciseDetailScreen() {
         console.error(error);
         if (!cancelled) {
           setExercise(null);
-          router.replace("/personal-records");
+          goBack();
         }
       } finally {
         if (!cancelled) {
@@ -70,13 +89,25 @@ export default function ExerciseDetailScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload only when id changes
+  }, [id]);
 
   useEffect(() => {
-    if (exercise) {
-      navigation.setOptions({ title: exercise.name });
-    }
-  }, [exercise, navigation]);
+    navigation.setOptions({
+      title: exercise?.name ?? "Exercise",
+      headerBackTitleVisible: false,
+      headerBackButtonDisplayMode: "minimal",
+      headerLeft: (props: object) => (
+        <HeaderBackButton
+          {...props}
+          tintColor={colors.text}
+          label=""
+          labelVisible={false}
+          onPress={goBack}
+        />
+      ),
+    });
+  }, [exercise, navigation, colors.text, fromWorkouts]);
 
   const sortedHistory = useMemo(() => {
     if (!exercise?.history) return [];
@@ -160,7 +191,7 @@ export default function ExerciseDetailScreen() {
           onPress: async () => {
             try {
               await deleteExercise(exercise.id);
-              router.replace("/personal-records");
+              goBack();
             } catch (error) {
               console.error(error);
               alert(

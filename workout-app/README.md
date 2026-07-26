@@ -4,17 +4,23 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
-1. Install dependencies
+1. Copy `.env.example` to `.env` / `.env.local` and set:
+   - `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+   - `EXPO_PUBLIC_API_BASE_URL` (Spring backend; use LAN IP for a physical device)
+
+2. Install dependencies
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. Start the app
 
    ```bash
    npx expo start
    ```
+
+Personal screens (Profile, WODs, Personal Records, Calendar, Skill Level, Settings) talk to the Spring API with the Supabase access token. Whiteboard remains local/mock for now.
 
 In the output, you'll find options to open the app in a
 

@@ -20,7 +20,14 @@ export default function PersonalRecordsLayout() {
           headerLeft: () => <HamburgerButton />,
         }}
       />
-      <Stack.Screen name="[id]" options={{ title: "Exercise" }} />
+      <Stack.Screen
+        name="[id]"
+        options={{
+          title: "Exercise",
+          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: "minimal",
+        }}
+      />
     </Stack>
   );
 }

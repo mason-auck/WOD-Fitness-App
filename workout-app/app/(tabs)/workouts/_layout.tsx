@@ -1,9 +1,8 @@
 import { Stack } from "expo-router";
 
-import { HamburgerButton } from "@/components/hamburger-button";
 import { useAppStyles } from "@/hooks/use-app-styles";
 
-export default function WodsLayout() {
+export default function WorkoutsLayout() {
   const { colors } = useAppStyles();
 
   return (
@@ -16,8 +15,8 @@ export default function WodsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "WODs",
-          headerLeft: () => <HamburgerButton />,
+          title: "Workouts",
+          headerShown: false,
         }}
       />
       <Stack.Screen name="[id]" options={{ title: "WOD" }} />

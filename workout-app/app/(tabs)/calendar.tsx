@@ -1,6 +1,8 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useMemo, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -14,19 +16,25 @@ import { ThemedView } from "@/components/themed-view";
 import {
   formatSelectedDate,
   getCalendarCells,
-  INITIAL_CALENDAR_LOGS,
   MONTH_NAMES,
   toDateKey,
   toDateKeyFromDate,
   WEEKDAY_LABELS,
   type CalendarLog,
 } from "@/constants/calendar";
-import type { PersonalRecord } from "@/constants/personal-records";
 import { Layout } from "@/constants/theme";
-import { INITIAL_WODS, type Wod } from "@/constants/wods";
-import { useExercises } from "@/contexts/exercises-context";
-import { useProgress } from "@/contexts/progress-context";
+import type { Wod } from "@/constants/wods";
 import { useAppStyles } from "@/hooks/use-app-styles";
+import {
+  createActivityLog,
+  getActivityLogs,
+  toCalendarLog,
+} from "@/lib/api/activity-api";
+import {
+  getPersonalRecords,
+  type ExerciseDto,
+} from "@/lib/api/exercise-api";
+import { getWods } from "@/lib/api/wods-api";
 
 type AddModal =
   | "menu"
@@ -40,21 +48,54 @@ const TODAY = new Date();
 
 export default function CalendarScreen() {
   const { colors, styles } = useAppStyles();
-  const { personalRecords, logPr: logExercisePr } = useExercises();
-  const { awardWodXp, awardPrXp } = useProgress();
 
   const [viewYear, setViewYear] = useState(TODAY.getFullYear());
   const [viewMonth, setViewMonth] = useState(TODAY.getMonth());
-  const [selectedDateKey, setSelectedDateKey] = useState(toDateKeyFromDate(TODAY));
-  const [logs, setLogs] = useState<CalendarLog[]>(INITIAL_CALENDAR_LOGS);
+  const [selectedDateKey, setSelectedDateKey] = useState(
+    toDateKeyFromDate(TODAY),
+  );
+  const [logs, setLogs] = useState<CalendarLog[]>([]);
+  const [wods, setWods] = useState<Wod[]>([]);
+  const [exercises, setExercises] = useState<ExerciseDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [addModal, setAddModal] = useState<AddModal>(null);
   const [selectedWod, setSelectedWod] = useState<Wod | null>(null);
-  const [selectedPr, setSelectedPr] = useState<PersonalRecord | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseDto | null>(
+    null,
+  );
   const [wodSearch, setWodSearch] = useState("");
   const [prSearch, setPrSearch] = useState("");
   const [scoreInput, setScoreInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+
+  const loadData = useCallback(async () => {
+    try {
+      const [activity, wodList, exerciseList] = await Promise.all([
+        getActivityLogs(),
+        getWods(),
+        getPersonalRecords(),
+      ]);
+      setLogs(activity.map(toCalendarLog));
+      setWods(wodList);
+      setExercises(exerciseList);
+    } catch (error) {
+      console.error("Error loading calendar:", error);
+      alert(
+        error instanceof Error ? error.message : "Could not load calendar",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      void loadData();
+    }, [loadData]),
+  );
 
   const todayKey = toDateKeyFromDate(TODAY);
   const calendarCells = useMemo(
@@ -77,24 +118,24 @@ export default function CalendarScreen() {
 
   const filteredWods = useMemo(() => {
     const query = wodSearch.trim().toLowerCase();
-    if (!query) return INITIAL_WODS;
-    return INITIAL_WODS.filter(
+    if (!query) return wods;
+    return wods.filter(
       (wod) =>
         wod.title.toLowerCase().includes(query) ||
         wod.type.toLowerCase().includes(query) ||
         wod.category.toLowerCase().includes(query),
     );
-  }, [wodSearch]);
+  }, [wodSearch, wods]);
 
-  const filteredPrs = useMemo(() => {
+  const filteredExercises = useMemo(() => {
     const query = prSearch.trim().toLowerCase();
-    if (!query) return personalRecords;
-    return personalRecords.filter(
-      (pr) =>
-        pr.movement.toLowerCase().includes(query) ||
-        pr.category.toLowerCase().includes(query),
+    if (!query) return exercises;
+    return exercises.filter(
+      (exercise) =>
+        exercise.name.toLowerCase().includes(query) ||
+        exercise.category.toLowerCase().includes(query),
     );
-  }, [prSearch, personalRecords]);
+  }, [prSearch, exercises]);
 
   const goToPreviousMonth = () => {
     if (viewMonth === 0) {
@@ -117,70 +158,79 @@ export default function CalendarScreen() {
   const closeAddModal = () => {
     setAddModal(null);
     setSelectedWod(null);
-    setSelectedPr(null);
+    setSelectedExercise(null);
     setWodSearch("");
     setPrSearch("");
     setScoreInput("");
     setNotesInput("");
   };
 
-  const saveWodLog = () => {
+  const saveWodLog = async () => {
     const score = scoreInput.trim();
     if (!selectedWod || !score) {
       alert("Please enter a score.");
       return;
     }
 
-    const entry: CalendarLog = {
-      id: Date.now().toString(),
-      kind: "wod",
-      dateKey: selectedDateKey,
-      wodId: selectedWod.id,
-      title: selectedWod.title,
-      wodType: selectedWod.type,
-      score,
-      notes: notesInput.trim() || undefined,
-    };
-
-    setLogs((current) => [entry, ...current]);
-    awardWodXp();
-    closeAddModal();
+    setSaving(true);
+    try {
+      const notes = notesInput.trim();
+      const created = await createActivityLog({
+        kind: "wod",
+        loggedOn: selectedDateKey,
+        wodId: selectedWod.id,
+        result: score,
+        ...(notes ? { notes } : {}),
+      });
+      setLogs((current) => [toCalendarLog(created), ...current]);
+      closeAddModal();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Could not save WOD log");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const savePrLog = () => {
+  const savePrLog = async () => {
     const value = scoreInput.trim();
-    if (!selectedPr || !value) {
+    if (!selectedExercise || !value) {
       alert("Please enter a value.");
       return;
     }
 
-    logExercisePr(selectedPr.id, value, {
-      notes: notesInput,
-      dateKey: selectedDateKey,
-    });
-
-    const entry: CalendarLog = {
-      id: Date.now().toString(),
-      kind: "pr",
-      dateKey: selectedDateKey,
-      prId: selectedPr.id,
-      movement: selectedPr.movement,
-      value,
-      notes: notesInput.trim() || undefined,
-    };
-
-    setLogs((current) => [entry, ...current]);
-    awardPrXp();
-    closeAddModal();
+    setSaving(true);
+    try {
+      const notes = notesInput.trim();
+      const created = await createActivityLog({
+        kind: "pr",
+        loggedOn: selectedDateKey,
+        exerciseId: selectedExercise.id,
+        result: value,
+        ...(notes ? { notes } : {}),
+      });
+      setLogs((current) => [toCalendarLog(created), ...current]);
+      closeAddModal();
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "Could not save PR log");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <ThemedView style={[styles.page, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.page}>
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 100 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}
       >
         <ThemedText type="subtitle">Calendar</ThemedText>
@@ -208,7 +258,9 @@ export default function CalendarScreen() {
         <View style={styles.calendarGrid}>
           {calendarCells.map((day, index) => {
             if (day === null) {
-              return <View key={`empty-${index}`} style={styles.calendarDayCell} />;
+              return (
+                <View key={`empty-${index}`} style={styles.calendarDayCell} />
+              );
             }
 
             const dateKey = toDateKey(viewYear, viewMonth, day);
@@ -288,8 +340,12 @@ export default function CalendarScreen() {
                     ]}
                   >
                     <ThemedText
-                      lightColor={log.kind === "wod" ? colors.onAccent : undefined}
-                      darkColor={log.kind === "wod" ? colors.onAccent : undefined}
+                      lightColor={
+                        log.kind === "wod" ? colors.onAccent : undefined
+                      }
+                      darkColor={
+                        log.kind === "wod" ? colors.onAccent : undefined
+                      }
                       style={styles.calendarLogBadgeText}
                     >
                       {log.kind === "wod" ? "WOD" : "PR"}
@@ -349,7 +405,9 @@ export default function CalendarScreen() {
                     size={Layout.iconSm}
                     color={colors.accent}
                   />
-                  <ThemedText type="defaultSemiBold">Log Personal Record</ThemedText>
+                  <ThemedText type="defaultSemiBold">
+                    Log Personal Record
+                  </ThemedText>
                 </Pressable>
                 <Pressable style={styles.buttonCancel} onPress={closeAddModal}>
                   <ThemedText style={styles.textMuted}>Cancel</ThemedText>
@@ -422,6 +480,7 @@ export default function CalendarScreen() {
                   placeholderTextColor={colors.icon}
                   value={scoreInput}
                   onChangeText={setScoreInput}
+                  editable={!saving}
                 />
 
                 <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
@@ -434,15 +493,20 @@ export default function CalendarScreen() {
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
+                  editable={!saving}
                 />
 
-                <Pressable style={styles.buttonPrimary} onPress={saveWodLog}>
+                <Pressable
+                  style={[styles.buttonPrimary, saving && { opacity: 0.6 }]}
+                  onPress={saveWodLog}
+                  disabled={saving}
+                >
                   <ThemedText
                     lightColor={colors.onAccent}
                     darkColor={colors.onAccent}
                     style={styles.buttonPrimaryText}
                   >
-                    Save WOD Log
+                    {saving ? "Saving…" : "Save WOD Log"}
                   </ThemedText>
                 </Pressable>
                 <Pressable
@@ -475,19 +539,22 @@ export default function CalendarScreen() {
                   />
                 </View>
                 <ScrollView showsVerticalScrollIndicator={false}>
-                  {filteredPrs.map((pr) => (
+                  {filteredExercises.map((exercise) => (
                     <Pressable
-                      key={pr.id}
+                      key={exercise.id}
                       style={styles.calendarPickerItem}
                       onPress={() => {
-                        setSelectedPr(pr);
-                        setScoreInput(pr.currentPr);
+                        setSelectedExercise(exercise);
+                        setScoreInput(exercise.currentPr ?? "");
                         setAddModal("pr-value");
                       }}
                     >
-                      <ThemedText type="defaultSemiBold">{pr.movement}</ThemedText>
+                      <ThemedText type="defaultSemiBold">
+                        {exercise.name}
+                      </ThemedText>
                       <ThemedText style={styles.activityDate}>
-                        {pr.category} · Current PR: {pr.currentPr}
+                        {exercise.category} · Current PR:{" "}
+                        {exercise.currentPr ?? "—"}
                       </ThemedText>
                     </Pressable>
                   ))}
@@ -501,16 +568,17 @@ export default function CalendarScreen() {
               </>
             )}
 
-            {addModal === "pr-value" && selectedPr && (
+            {addModal === "pr-value" && selectedExercise && (
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
                 <ThemedText type="subtitle" style={styles.sheetTitle}>
-                  Log {selectedPr.movement}
+                  Log {selectedExercise.name}
                 </ThemedText>
                 <ThemedText style={styles.listLabel}>
-                  {formatSelectedDate(selectedDateKey)} · {selectedPr.category}
+                  {formatSelectedDate(selectedDateKey)} ·{" "}
+                  {selectedExercise.category}
                 </ThemedText>
 
                 <ThemedText style={styles.fieldLabel}>Value</ThemedText>
@@ -520,6 +588,7 @@ export default function CalendarScreen() {
                   placeholderTextColor={colors.icon}
                   value={scoreInput}
                   onChangeText={setScoreInput}
+                  editable={!saving}
                 />
 
                 <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
@@ -532,15 +601,20 @@ export default function CalendarScreen() {
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
+                  editable={!saving}
                 />
 
-                <Pressable style={styles.buttonPrimary} onPress={savePrLog}>
+                <Pressable
+                  style={[styles.buttonPrimary, saving && { opacity: 0.6 }]}
+                  onPress={savePrLog}
+                  disabled={saving}
+                >
                   <ThemedText
                     lightColor={colors.onAccent}
                     darkColor={colors.onAccent}
                     style={styles.buttonPrimaryText}
                   >
-                    Save PR Log
+                    {saving ? "Saving…" : "Save PR Log"}
                   </ThemedText>
                 </Pressable>
                 <Pressable

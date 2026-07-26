@@ -29,7 +29,7 @@ type DrawerMenuItem = {
 
 const TAB_MENU_ITEMS: DrawerMenuItem[] = [
   { label: "Profile", href: "/profile", icon: "person" },
-  { label: "WODs", href: "/WODs", icon: "format-list-bulleted" },
+  { label: "Workouts", href: "/workouts", icon: "format-list-bulleted" },
   { label: "Whiteboard", href: "/whiteboard", icon: "edit" },
 ];
 
