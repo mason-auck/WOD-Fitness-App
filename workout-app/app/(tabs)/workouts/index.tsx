@@ -1,9 +1,15 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import { KeyboardSheet } from "@/components/keyboard-sheet";
+import { KeyboardScreen } from "@/components/keyboard-screen";
+import {
+  BottomSheetInput,
+  ModalFormScroll,
+  ModalKeyboardFrame,
+} from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
@@ -219,11 +225,7 @@ export default function WorkoutsScreen() {
 
   return (
     <ThemedView style={styles.page}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardScreen contentContainerStyle={styles.scrollContent}>
         <View style={styles.settingsUnitPicker}>
           <Pressable
             style={[
@@ -503,7 +505,7 @@ export default function WorkoutsScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </KeyboardScreen>
 
       <Modal
         visible={showFilterModal}
@@ -511,8 +513,10 @@ export default function WorkoutsScreen() {
         animationType="slide"
         onRequestClose={() => setShowFilterModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.sheet, styles.sheetFilter]}>
+        <ModalKeyboardFrame
+          onClose={() => setShowFilterModal(false)}
+          sheetStyle={styles.sheetFilter}
+        >
             <View style={styles.sheetHeader}>
               <ThemedText type="subtitle">Filter WODs</ThemedText>
               {filtersActive && (
@@ -522,7 +526,14 @@ export default function WorkoutsScreen() {
               )}
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === "ios" ? "interactive" : "on-drag"
+              }
+              contentContainerStyle={{ paddingBottom: 32 }}
+            >
               {FILTER_SECTIONS.map((section) => (
                 <View key={section.title} style={styles.sheetSection}>
                   <ThemedText style={styles.sheetSectionTitle}>
@@ -571,8 +582,7 @@ export default function WorkoutsScreen() {
                 Apply Filters
               </ThemedText>
             </Pressable>
-          </View>
-        </View>
+        </ModalKeyboardFrame>
       </Modal>
 
       <Modal
@@ -584,23 +594,27 @@ export default function WorkoutsScreen() {
           resetCreateForm();
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.sheet, styles.sheetTall]}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+        <ModalKeyboardFrame
+          onClose={() => {
+            setShowCreateModal(false);
+            resetCreateForm();
+          }}
+          sheetStyle={styles.sheetTall}
+        >
+            <ModalFormScroll>
               <ThemedText type="subtitle" style={styles.sheetTitle}>
                 Create WOD
               </ThemedText>
 
               <ThemedText style={styles.fieldLabel}>Name</ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={styles.input}
                 placeholder="e.g. Saturday Chipper"
                 placeholderTextColor={colors.icon}
                 value={newTitle}
                 onChangeText={setNewTitle}
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
 
               <ThemedText style={styles.fieldLabel}>Type</ThemedText>
@@ -629,7 +643,7 @@ export default function WorkoutsScreen() {
               </View>
 
               <ThemedText style={styles.fieldLabel}>Description</ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe the workout clearly — movements, reps, weights, time cap..."
                 placeholderTextColor={colors.icon}
@@ -663,9 +677,8 @@ export default function WorkoutsScreen() {
               >
                 <ThemedText style={styles.textMuted}>Cancel</ThemedText>
               </Pressable>
-            </ScrollView>
-          </View>
-        </View>
+            </ModalFormScroll>
+        </ModalKeyboardFrame>
       </Modal>
 
       <Modal
@@ -679,7 +692,7 @@ export default function WorkoutsScreen() {
             Add Strength Movement
           </ThemedText>
           <ThemedText style={styles.fieldLabel}>Exercise name</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={styles.input}
             placeholder="e.g. Dumbbell Curl"
             placeholderTextColor={colors.icon}
@@ -687,6 +700,8 @@ export default function WorkoutsScreen() {
             onChangeText={setNewExerciseName}
             autoFocus
             editable={!creatingStrength}
+            returnKeyType="done"
+            onSubmitEditing={handleCreateStrength}
           />
           <Pressable
             style={[

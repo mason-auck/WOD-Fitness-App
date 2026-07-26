@@ -2,6 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useMemo, useState } from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -9,6 +10,12 @@ import {
   View,
 } from "react-native";
 
+import { KeyboardScreen } from "@/components/keyboard-screen";
+import {
+  BottomSheetInput,
+  ModalFormScroll,
+  ModalKeyboardFrame,
+} from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Layout } from "@/constants/theme";
@@ -274,11 +281,7 @@ export default function WhiteboardScreen() {
 
   return (
     <ThemedView style={styles.page}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+      <KeyboardScreen contentContainerStyle={styles.scrollContent}>
         <ThemedText type="subtitle">Whiteboard</ThemedText>
         <ThemedText style={styles.listLabel}>
           Share your WOD results with your gym community.
@@ -343,7 +346,7 @@ export default function WhiteboardScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardScreen>
 
       <Modal
         visible={commentEntry !== null}
@@ -354,8 +357,13 @@ export default function WhiteboardScreen() {
           setNewComment("");
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.sheet, styles.sheetTall]}>
+        <ModalKeyboardFrame
+          onClose={() => {
+            setCommentEntry(null);
+            setNewComment("");
+          }}
+          sheetStyle={styles.sheetTall}
+        >
             <ThemedText type="defaultSemiBold" style={styles.sheetTitle}>
               Comments
             </ThemedText>
@@ -368,6 +376,9 @@ export default function WhiteboardScreen() {
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={
+                Platform.OS === "ios" ? "interactive" : "on-drag"
+              }
               style={{ maxHeight: 280 }}
             >
               {commentEntry?.comments.length === 0 ? (
@@ -398,6 +409,8 @@ export default function WhiteboardScreen() {
               value={newComment}
               onChangeText={setNewComment}
               multiline
+              returnKeyType="done"
+              blurOnSubmit
             />
 
             <Pressable style={styles.buttonPrimary} onPress={addComment}>
@@ -419,8 +432,7 @@ export default function WhiteboardScreen() {
             >
               <ThemedText style={styles.textMuted}>Close</ThemedText>
             </Pressable>
-          </View>
-        </View>
+        </ModalKeyboardFrame>
       </Modal>
 
       <Modal
@@ -432,12 +444,14 @@ export default function WhiteboardScreen() {
           resetShareForm();
         }}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.sheet, styles.sheetTall]}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
+        <ModalKeyboardFrame
+          onClose={() => {
+            setShowShareModal(false);
+            resetShareForm();
+          }}
+          sheetStyle={styles.sheetTall}
+        >
+            <ModalFormScroll>
               <ThemedText type="subtitle" style={styles.sheetTitle}>
                 Share a Workout
               </ThemedText>
@@ -447,27 +461,31 @@ export default function WhiteboardScreen() {
               </ThemedText>
 
               <ThemedText style={styles.fieldLabel}>Workout</ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={styles.input}
                 placeholder="e.g. Fran, Back Squat 5x5"
                 placeholderTextColor={colors.icon}
                 value={shareWodTitle}
                 onChangeText={setShareWodTitle}
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
 
               <ThemedText style={styles.fieldLabel}>Score</ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={styles.input}
                 placeholder="e.g. 4:32, 225 lbs, 15 rounds + 3"
                 placeholderTextColor={colors.icon}
                 value={shareScore}
                 onChangeText={setShareScore}
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
 
               <ThemedText style={styles.fieldLabel}>
                 Notes (optional)
               </ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={[styles.input, styles.textArea]}
                 placeholder="How it felt, scaling, equipment used..."
                 placeholderTextColor={colors.icon}
@@ -481,12 +499,13 @@ export default function WhiteboardScreen() {
               <ThemedText style={styles.fieldLabel}>
                 Short comment (optional)
               </ThemedText>
-              <TextInput
+              <BottomSheetInput
                 style={styles.input}
                 placeholder="A quick caption for your post"
                 placeholderTextColor={colors.icon}
                 value={shareCaption}
                 onChangeText={setShareCaption}
+                returnKeyType="done"
               />
 
               <Pressable
@@ -511,9 +530,8 @@ export default function WhiteboardScreen() {
               >
                 <ThemedText style={styles.textMuted}>Cancel</ThemedText>
               </Pressable>
-            </ScrollView>
-          </View>
-        </View>
+            </ModalFormScroll>
+        </ModalKeyboardFrame>
       </Modal>
     </ThemedView>
   );

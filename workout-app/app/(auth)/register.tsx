@@ -2,11 +2,12 @@ import { Link, type Href } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   TextInput,
-  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -25,6 +26,7 @@ export default function RegisterScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleRegister = async () => {
+    Keyboard.dismiss();
     setError(null);
     setInfo(null);
     setSubmitting(true);
@@ -46,7 +48,17 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={[styles.scrollContent, { justifyContent: "center", flex: 1 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { justifyContent: "center", flexGrow: 1 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          showsVerticalScrollIndicator={false}
+        >
           <ThemedText type="title">Create account</ThemedText>
           <ThemedText style={styles.listLabel}>
             Registers with Supabase Auth. A profile row is created by the
@@ -60,6 +72,8 @@ export default function RegisterScreen() {
             placeholderTextColor={colors.icon}
             value={displayName}
             onChangeText={setDisplayName}
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
           <TextInput
             style={styles.input}
@@ -70,6 +84,8 @@ export default function RegisterScreen() {
             placeholderTextColor={colors.icon}
             value={email}
             onChangeText={setEmail}
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
           <TextInput
             style={styles.input}
@@ -80,12 +96,16 @@ export default function RegisterScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            returnKeyType="done"
+            onSubmitEditing={handleRegister}
           />
 
           {error ? (
             <ThemedText style={styles.textDanger}>{error}</ThemedText>
           ) : null}
-          {info ? <ThemedText style={styles.listLabel}>{info}</ThemedText> : null}
+          {info ? (
+            <ThemedText style={styles.listLabel}>{info}</ThemedText>
+          ) : null}
 
           <Pressable
             style={[styles.buttonPrimary, submitting && { opacity: 0.7 }]}
@@ -103,10 +123,12 @@ export default function RegisterScreen() {
 
           <Link href={"/(auth)/login" as Href} asChild>
             <Pressable>
-              <ThemedText type="link">Already have an account? Log in</ThemedText>
+              <ThemedText type="link">
+                Already have an account? Log in
+              </ThemedText>
             </Pressable>
           </Link>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
   );

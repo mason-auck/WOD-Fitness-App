@@ -2,11 +2,12 @@ import { Link, type Href } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   TextInput,
-  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleLogin = async () => {
+    Keyboard.dismiss();
     setError(null);
     setSubmitting(true);
     try {
@@ -40,7 +42,17 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={[styles.scrollContent, { justifyContent: "center", flex: 1 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { justifyContent: "center", flexGrow: 1 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
+          showsVerticalScrollIndicator={false}
+        >
           <ThemedText type="title">WOD Log</ThemedText>
           <ThemedText style={styles.listLabel}>
             Log in with your Supabase account. Session tokens are stored in
@@ -56,6 +68,8 @@ export default function LoginScreen() {
             placeholderTextColor={colors.icon}
             value={email}
             onChangeText={setEmail}
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
           <TextInput
             style={styles.input}
@@ -66,6 +80,8 @@ export default function LoginScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
           />
 
           {error ? (
@@ -89,7 +105,7 @@ export default function LoginScreen() {
               <ThemedText type="link">Create an account</ThemedText>
             </Pressable>
           </Link>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
   );

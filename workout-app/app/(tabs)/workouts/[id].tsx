@@ -12,11 +12,11 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  TextInput,
   View,
 } from "react-native";
 
 import { KeyboardSheet } from "@/components/keyboard-sheet";
+import { BottomSheetInput } from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { formatSelectedDate, toDateKeyFromDate } from "@/constants/calendar";
@@ -356,17 +356,19 @@ export default function WodDetailScreen() {
           </ThemedText>
 
           <ThemedText style={styles.fieldLabel}>Score</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={styles.input}
             placeholder="e.g. 4:32, 225 lbs, 15 rounds + 3"
             placeholderTextColor={colors.icon}
             value={scoreInput}
             onChangeText={setScoreInput}
             editable={!saving}
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
 
           <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={[styles.input, styles.textArea]}
             placeholder="How it felt, scaling, etc."
             placeholderTextColor={colors.icon}

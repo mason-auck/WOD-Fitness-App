@@ -13,11 +13,11 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  TextInput,
   View,
 } from "react-native";
 
 import { KeyboardSheet } from "@/components/keyboard-sheet";
+import { BottomSheetInput } from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { formatSelectedDate } from "@/constants/calendar";
@@ -301,17 +301,18 @@ export default function ExerciseDetailScreen() {
           </ThemedText>
 
           <ThemedText style={styles.fieldLabel}>Value</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={styles.input}
             placeholder="e.g. 230 lbs, 6:30, 20 reps"
             placeholderTextColor={colors.icon}
             value={valueInput}
             onChangeText={setValueInput}
             editable={!saving}
+            returnKeyType="done"
           />
 
           <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={[styles.input, styles.textArea]}
             placeholder="How it felt, conditions, etc."
             placeholderTextColor={colors.icon}
@@ -355,7 +356,7 @@ export default function ExerciseDetailScreen() {
           </ThemedText>
 
           <ThemedText style={styles.fieldLabel}>Exercise name</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={styles.input}
             placeholder="Exercise name"
             placeholderTextColor={colors.icon}
@@ -363,6 +364,7 @@ export default function ExerciseDetailScreen() {
             onChangeText={setRenameInput}
             autoFocus
             editable={!saving}
+            returnKeyType="done"
           />
 
           <Pressable

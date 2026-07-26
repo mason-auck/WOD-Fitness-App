@@ -3,7 +3,9 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -11,6 +13,12 @@ import {
   View,
 } from "react-native";
 
+import { KeyboardScreen } from "@/components/keyboard-screen";
+import {
+  BottomSheetInput,
+  ModalFormScroll,
+  ModalKeyboardFrame,
+} from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
@@ -156,6 +164,7 @@ export default function CalendarScreen() {
   };
 
   const closeAddModal = () => {
+    Keyboard.dismiss();
     setAddModal(null);
     setSelectedWod(null);
     setSelectedExercise(null);
@@ -229,9 +238,8 @@ export default function CalendarScreen() {
 
   return (
     <ThemedView style={styles.page}>
-      <ScrollView
+      <KeyboardScreen
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
-        showsVerticalScrollIndicator={false}
       >
         <ThemedText type="subtitle">Calendar</ThemedText>
 
@@ -362,7 +370,7 @@ export default function CalendarScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </KeyboardScreen>
 
       <Pressable
         style={styles.calendarFab}
@@ -378,8 +386,10 @@ export default function CalendarScreen() {
         animationType="slide"
         onRequestClose={closeAddModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.sheet, styles.sheetTall]}>
+        <ModalKeyboardFrame
+          onClose={closeAddModal}
+          sheetStyle={styles.sheetTall}
+        >
             {addModal === "menu" && (
               <>
                 <ThemedText type="subtitle" style={styles.sheetTitle}>
@@ -462,10 +472,7 @@ export default function CalendarScreen() {
             )}
 
             {addModal === "wod-score" && selectedWod && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
+              <ModalFormScroll>
                 <ThemedText type="subtitle" style={styles.sheetTitle}>
                   Log {selectedWod.title}
                 </ThemedText>
@@ -474,17 +481,19 @@ export default function CalendarScreen() {
                 </ThemedText>
 
                 <ThemedText style={styles.fieldLabel}>Score</ThemedText>
-                <TextInput
+                <BottomSheetInput
                   style={styles.input}
                   placeholder="e.g. 4:32, 225 lbs, 15 rounds + 3"
                   placeholderTextColor={colors.icon}
                   value={scoreInput}
                   onChangeText={setScoreInput}
                   editable={!saving}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
 
                 <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
-                <TextInput
+                <BottomSheetInput
                   style={[styles.input, styles.textArea]}
                   placeholder="How it felt, scaling, etc."
                   placeholderTextColor={colors.icon}
@@ -515,7 +524,7 @@ export default function CalendarScreen() {
                 >
                   <ThemedText style={styles.textMuted}>Back</ThemedText>
                 </Pressable>
-              </ScrollView>
+              </ModalFormScroll>
             )}
 
             {addModal === "pr-pick" && (
@@ -569,10 +578,7 @@ export default function CalendarScreen() {
             )}
 
             {addModal === "pr-value" && selectedExercise && (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
+              <ModalFormScroll>
                 <ThemedText type="subtitle" style={styles.sheetTitle}>
                   Log {selectedExercise.name}
                 </ThemedText>
@@ -582,17 +588,19 @@ export default function CalendarScreen() {
                 </ThemedText>
 
                 <ThemedText style={styles.fieldLabel}>Value</ThemedText>
-                <TextInput
+                <BottomSheetInput
                   style={styles.input}
                   placeholder="e.g. 230 lbs, 5 reps"
                   placeholderTextColor={colors.icon}
                   value={scoreInput}
                   onChangeText={setScoreInput}
                   editable={!saving}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
 
                 <ThemedText style={styles.fieldLabel}>Notes (optional)</ThemedText>
-                <TextInput
+                <BottomSheetInput
                   style={[styles.input, styles.textArea]}
                   placeholder="Context for this PR attempt..."
                   placeholderTextColor={colors.icon}
@@ -623,10 +631,9 @@ export default function CalendarScreen() {
                 >
                   <ThemedText style={styles.textMuted}>Back</ThemedText>
                 </Pressable>
-              </ScrollView>
+              </ModalFormScroll>
             )}
-          </View>
-        </View>
+        </ModalKeyboardFrame>
       </Modal>
     </ThemedView>
   );

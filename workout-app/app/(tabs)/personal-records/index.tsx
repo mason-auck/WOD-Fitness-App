@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 
 import { KeyboardSheet } from "@/components/keyboard-sheet";
+import { KeyboardScreen } from "@/components/keyboard-screen";
+import { BottomSheetInput } from "@/components/modal-keyboard-frame";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import {
@@ -95,10 +96,8 @@ export default function PersonalRecordsScreen() {
 
   return (
     <ThemedView style={styles.page}>
-      <ScrollView
+      <KeyboardScreen
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
         <ThemedText style={styles.listLabel}>
           Track PRs for lifts, cardio, benchmarks, and more.
@@ -164,7 +163,7 @@ export default function PersonalRecordsScreen() {
             })}
           </View>
         )}
-      </ScrollView>
+      </KeyboardScreen>
 
       <Pressable
         style={styles.calendarFab}
@@ -197,13 +196,15 @@ export default function PersonalRecordsScreen() {
           </ThemedText>
 
           <ThemedText style={styles.fieldLabel}>Exercise name</ThemedText>
-          <TextInput
+          <BottomSheetInput
             style={styles.input}
             placeholder="e.g. Bench Press, 1 Mile Run"
             placeholderTextColor={colors.icon}
             value={newExerciseName}
             onChangeText={setNewExerciseName}
             autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCreateExercise}
           />
 
           <Pressable
